@@ -5,7 +5,8 @@ import sys
 import signal
 import os
 
-def signal_handler(signal, frame):
+
+def signal_handler( signal, frame):
     print("\nprogram exiting gracefully")
     sys.exit(0)
 
@@ -14,6 +15,7 @@ def siginit():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGQUIT, signal_handler)
+
 
 def read_csv(filepath):
     x_values, y_values = [], []
@@ -24,16 +26,15 @@ def read_csv(filepath):
             if len(columns) < 2:
                 print("Error: Need at least 2 columns")
                 return None, None
-            
+
             x_col, y_col = columns[0], columns[1]
             print(f"Using columns: x='{x_col}', y='{y_col}'")
             for row in reader:
                 x_values.append(float(row[x_col]))
                 y_values.append(float(row[y_col]))
         return x_values, y_values
-        
-    except Exception as e:
-        print(f"Error reading CSV: {e}")
+    except:
+        print(f"Error reading CSV")
         return None, None
 
 
@@ -140,42 +141,59 @@ if __name__ == "__main__":
             command = input(">> ").strip().lower()
             if command == "start":
                 a = b = 0
-                print("your csv file path please:")
-                csv_path = input(">>>")
-                if "csv" not in csv_path:
-                    print("error : csv file required")
-                else:
-                    kms, prices = read_csv(csv_path)
-                    if kms and prices:
-                        print(
-                            f"Model hyperparameters: epoch = {epoch}, learningRate = {learningRate}"
-                        )
-                        print(
-                            f"START: Parameters: a = {a}, b = {b} for training on {csv_path}"
-                        )
-                        a, b = train_model(epoch, learningRate, kms, prices)
-                        print(
-                            f"END: Model parameters trained on data from {csv_path}: a = {a}, b = {b}"
-                        )
-            elif command == "prediction":
+                while KeyboardInterrupt:
+                    print("your csv file path please:")
+                    csv_path = input(">>> ")
+                    if "csv" not in csv_path:
+                        if (
+                            csv_path.strip().lower() == "exit"
+                            or csv_path.strip().lower() == "quit"
+                        ):
+                            break
+                        print("error : csv file required")
+                    else:
+                        kms, prices = read_csv(csv_path)
+                        if kms and prices:
+                            print(
+                                f"Model hyperparameters: epoch = {epoch}, learningRate = {learningRate}"
+                            )
+                            print(
+                                f"START: Parameters: a = {a}, b = {b} for training on {csv_path}"
+                            )
+                            a, b = train_model(epoch, learningRate, kms, prices)
+                            print(
+                                f"END: Model parameters trained on data from {csv_path}: a = {a}, b = {b}"
+                            )
+                        break
+            elif command == "prediction" or command == "P":
+                km_input = 0
                 if a == 0 and b == 0:
                     print("first 'start' the program with a csv file")
                 else:
-                    km_input = int(input(">>>"))
-                    prix_predit = estimate_price(km_input, a, b)
-                    prix_reel = 0
-                    for km, price in zip(kms, prices):
-                        if km == km_input:
-                            print("mileage found in dataset")
-                            prix_reel = price
-                    if prix_reel:
-                        erreur = abs(prix_predit - prix_reel)
-                        print(
-                            f"Km: {km_input:6.0f} | Real: {prix_reel:4.0f}€ | Predicted: {prix_predit:6.0f}€ | Error: {erreur:6.0f}€"
-                        )
-                    else:
-                        print(f"Km: {km_input:6.0f} | Predicted: {prix_predit:6.0f}€")
-            elif command == "visualisation":
+                    while KeyboardInterrupt:
+                        km_input = input(">>> ").strip().lower()
+                        if km_input == "exit" or km_input == "quit":
+                            break
+                        try:
+                            km_input = float(km_input)
+                            prix_predit = estimate_price(km_input, a, b)
+                            prix_reel = 0
+                            for km, price in zip(kms, prices):
+                                if km == km_input:
+                                    prix_reel = price
+                            if prix_reel:
+                                erreur = abs(prix_predit - prix_reel)
+                                print(
+                                    f"Km: {km_input:6.0f} | Real: {prix_reel:4.0f}€ | Predicted: {prix_predit:6.0f}€ | Error: {erreur:6.0f}€"
+                                )
+                            else:
+                                print(
+                                    f"Km: {km_input:6.0f} | Predicted: {prix_predit:6.0f}€"
+                                )
+                        except:
+                            print("a decimal number please...")
+                            
+            elif command == "visualisation" or command == "V":
                 if a == 0 and b == 0:
                     print("first 'start' the program with a csv file")
                 else:
@@ -193,6 +211,35 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             print("\nInterruption detected")
             break
+    print("see you ;)")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # ERROR:
 # Mean absolute deviation: Σ|xi - μ| / n - less used in ML

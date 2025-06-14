@@ -1,4 +1,4 @@
-from p1 import estimate_price
+from p1 import estimate_price, write_csv, read_csv
 import matplotlib.pyplot as plt
 import csv
 import sys
@@ -6,7 +6,7 @@ import signal
 import os
 
 
-def signal_handler( signal, frame):
+def signal_handler(signal, frame):
     print("\nprogram exiting gracefully")
     sys.exit(0)
 
@@ -17,37 +17,7 @@ def siginit():
     signal.signal(signal.SIGQUIT, signal_handler)
 
 
-def read_csv(filepath):
-    x_values, y_values = [], []
-    try:
-        with open(filepath, mode="r", newline="") as csvfile:
-            reader = csv.DictReader(csvfile)
-            columns = reader.fieldnames
-            if len(columns) < 2:
-                print("Error: Need at least 2 columns")
-                return None, None
-
-            x_col, y_col = columns[0], columns[1]
-            print(f"Using columns: x='{x_col}', y='{y_col}'")
-            for row in reader:
-                x_values.append(float(row[x_col]))
-                y_values.append(float(row[y_col]))
-        return x_values, y_values
-    except:
-        print(f"Error reading CSV")
-        return None, None
-
-
 def visualiser_donnees(kms, prices, a, b):
-    """
-    Visualizes the data and the regression line
-
-    Args:
-        kms: list of mileages
-        prices: list of corresponding prices
-        a: slope coefficient
-        b: y-intercept
-    """
     plt.figure(figsize=(15, 10))
     #                    x, y
 
@@ -88,7 +58,7 @@ def normalise_z_score(data):
     ecartype = variance**0.5  # square root of variance
     # Avoid division by zero
     if ecartype == 0:
-        return [0] * n
+        return mean, 0, [0] * n
     normalize = [((i - mean) / ecartype) for i in data]
     return mean, ecartype, normalize
 
@@ -135,15 +105,15 @@ if __name__ == "__main__":
     kms, prices = 0, 0
     print("""Usage of the programme: prompt :
     - 'start' : take a csv file for the prediction training
-    - 'bonus' : give a graphique visalisation""")
+    - 'prediction' : take a decimal (x) and return the prediction (y)
+    - 'visualisation' : give a graphique visalisation""")
     while KeyboardInterrupt:
         try:
             command = input(">> ").strip().lower()
             if command == "start":
                 a = b = 0
                 while KeyboardInterrupt:
-                    print("your csv file path please:")
-                    csv_path = input(">>> ")
+                    csv_path = input("csv file path >> ")
                     if "csv" not in csv_path:
                         if (
                             csv_path.strip().lower() == "exit"
@@ -162,16 +132,17 @@ if __name__ == "__main__":
                             )
                             a, b = train_model(epoch, learningRate, kms, prices)
                             print(
-                                f"END: Model parameters trained on data from {csv_path}: a = {a}, b = {b}"
+                                f"END: Model parameters trained on data from {csv_path}: a = {a:.5f}, b = {b:.0f}"
                             )
+                            write_csv([["a", "b"], [a, b]])
                         break
-            elif command == "prediction" or command == "P":
+            elif command == "prediction" or command == "p":
                 km_input = 0
                 if a == 0 and b == 0:
                     print("first 'start' the program with a csv file")
                 else:
                     while KeyboardInterrupt:
-                        km_input = input(">>> ").strip().lower()
+                        km_input = input("x >>> ").strip().lower()
                         if km_input == "exit" or km_input == "quit":
                             break
                         try:
@@ -192,8 +163,8 @@ if __name__ == "__main__":
                                 )
                         except:
                             print("a decimal number please...")
-                            
-            elif command == "visualisation" or command == "V":
+
+            elif command == "visualisation" or command == "v":
                 if a == 0 and b == 0:
                     print("first 'start' the program with a csv file")
                 else:
@@ -212,33 +183,6 @@ if __name__ == "__main__":
             print("\nInterruption detected")
             break
     print("see you ;)")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # ERROR:
